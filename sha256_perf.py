@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Time calls to hashlib.sha256 and record.
+
 import base64
 import hmac
 import hashlib
