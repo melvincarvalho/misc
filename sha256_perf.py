@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Need to add support for more hash functions for timing.
+
 import base64
 import hmac
 import hashlib
