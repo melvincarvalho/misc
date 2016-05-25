@@ -1,13 +1,18 @@
 import tornado.ioloop
 import tornado.web
 import time
+import logging
+import logconf
+
+logger = logging.getLogger(__name__)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         ss = int(self.get_argument('ss',1))
-        print("sleeping for %s seconds...." % (ss,))
+        logger.info("sleeping for %s seconds...." % (ss,))
         time.sleep(ss)
-        print('done')
+        self.write("woke up")
+        logger.info('done')
 
 def make_app():
     return tornado.web.Application([
