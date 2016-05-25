@@ -120,6 +120,8 @@ logger.info('only logging to a file!')
 > only logging to a file!
 ```
 
+## Logging from a server
+
 If you are writing a server, you want to rotate the server logs. You can't really do this if you are redirecting stderr. Try it:
 test.py:
 ```
@@ -141,7 +143,16 @@ tail -f /tmp/log.1
 ```
 Of course, the process you started will still keep writing to the underlying file which now you called /tmp/log.1. And you can't (easily at least, I guess anything is possible with enough bit twidlling) make it stop, without killing the process.
 
-So you want to write to a file which you can rotate.
+So you want to write to a file which you can rotate (i.e. take all the logs at a point in time, move them to some other file, or copy them and truncate this file so it doesn't keep getting bigger, all while letting the process keep logging to the file, and of course not lose anything). This is logrotate - read about it elsewhere.
+
+One way logrotate is done by many servers (I believe by mysql / postgres and possibly apache? do this), you send the process a signal (HUP), they handle this signal by doing, amongst other things, closing the log filehandle they are writing to, and reopening it. So the sequence is `mv /tmp/log /tmp/log.<datetime>; kill -HUP <pid>;` and now the process will reopen (and recreate /tmp/log and log to this new file.
+
+I'm guessing there is a way to make logging do this - possibly by getting the FileHandler that it is using, and closing and reopening the file and giving the new filehandle back or some such). But logger provides a nicer way to do this.
+
+#### logging.handlers.WatchedFileHander
+https://docs.python.org/2/library/logging.handlers.html#module-logging.handlers
+
+
 
 First, lets make sure 
 
