@@ -147,14 +147,26 @@ So you want to write to a file which you can rotate (i.e. take all the logs at a
 
 One way logrotate is done by many servers (I believe by mysql / postgres and possibly apache? do this), you send the process a signal (HUP), they handle this signal by doing, amongst other things, closing the log filehandle they are writing to, and reopening it. So the sequence is `mv /tmp/log /tmp/log.<datetime>; kill -HUP <pid>;` and now the process will reopen (and recreate /tmp/log and log to this new file.
 
-I'm guessing there is a way to make logging do this - possibly by getting the FileHandler that it is using, and closing and reopening the file and giving the new filehandle back or some such). But logger provides a nicer way to do this.
+I'm guessing there is a way to make logging do this - possibly by getting the FileHandler that it is using, and closing and reopening the file and giving the new filehandle back or some such). But logger provides a easier way to do this.
 
 #### logging.handlers.WatchedFileHander
 https://docs.python.org/2/library/logging.handlers.html#module-logging.handlers
 
+```
+import logging
+import logging.handlers
 
+logger = logging.getLogger()
+handler = logging.handlers.WatchedFileHandler('/tmp/log')
+logger.addHandler(handler)
+```
+Read the docs on WatchedFileHandler to see how it works, but it does exactly what we want. I think in some ways this is better than the RotatingFileHandler, because it lets you use logrotate to control the logrotation and backup, vs having it controlled by the python process.
 
-First, lets make sure 
+### Logging within multi-threaded apps.
+The logging documentation says loggers are thread-safe, I don't have much more to add here.
+
+### Logging within multi-process apps.
+
 
 
 
