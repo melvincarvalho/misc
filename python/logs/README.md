@@ -75,15 +75,22 @@ import logging
 logger = logging.getLogger()
 _handler = logging.StreamHander()
 logger.addHandler(_handler)
-logger.setLevel(os.getenv('MY_LOGLEVEL',20))
+logger.setLevel(int(os.getenv('MY_LOGLEVEL',20)))
 ```
+Import mylogging.py everywhere (or in some top level __init__.py file), and just use logger.[debug|info|warn|error] all over your code, and control the loglevel by using MY_LOGLEVEL env var. You are done.
 
-Q: But I want to log to a file.
-Option1: Just redirect the logs that are written out to stderr to a file of your choosing. I always think this is the best. The process really doesn't need to know where logs are being written, etc.
+Go away now if you don't want to waste any more time with logging. Just do the above until you *need* to read on.
+
+### I want to format my logs: RTFM (for now I am not delving in this - you got some text right?)
+
+### I want to log to a file.
+Option1: Just redirect the logs that are written out to stderr to a file of your choosing. I always think this is the best. The process really doesn't need to know where logs are being written, etc. Especially if you're just writing some stand-alone script - just let the user decide using standard redirections of stderr stream. Don't make decisions about "I will overwrite the logfile given to me / I will append" etc etc.
 
 But there are good reasons (such as if you are writing daemons, or servers) that you want the process to write to a file. Perhaps one that can be specified as an argument `--log-file` or some such.
 
+First, lets just make sure we can make logging write to a file. Now, if you do below, you may get something like:
 ```
+logger = logging.getLogger()
 handler = logging.FileHandler(os.getenv('MY_LOGFILE', '/tmp/log'))
 logger.setHandler(handler)
 logger.info('logging to a file!')
@@ -96,12 +103,15 @@ What?? Why did this get printed out?
 ```
 So it got printed out and went to the file.
 
+This is probably because you somehow have multiple handlers set up on your root logger. If you don't get anything printed out, just to file, then you didn't have the extra handler set up.
+
+If you do, you can look at what handlers are set up.
 ```
 logger.handlers
 > [<logging.FileHandler at 0x10397ba10>, <logging.StreamHandler at 0x1039618d0>]
 ```
 Ah! Note you *added* an handler. Nowhere in the docs does it say how to easily remove an existing handler. Or rather, how to see what handlers are there. But above is how.
-So, if you really want to, you can remove the StreamHandler.
+So, you can remove the StreamHandler. Of course, best is to never create it. But remember, using some convenience functions `logging.<func>` will under the hood create this handler.
 ```
 logger.removeHandler(logger.handlers[1])
 logger.info('only logging to a file!')
@@ -109,6 +119,34 @@ logger.info('only logging to a file!')
 !tail -1 /tmp/log
 > only logging to a file!
 ```
+
+If you are writing a server, you want to rotate the server logs. You can't really do this if you are redirecting stderr. Try it:
+test.py:
+```
+import sys, os
+import time
+
+print "starting"
+while True:
+    print >> sys.stderr, "the time is now %s" % (time.time(),)
+    time.sleep(1)
+print "done"
+```
+
+Then
+```
+python test.py 2> /tmp/log &
+mv /tmp/log /tmp/log.1
+tail -f /tmp/log.1
+```
+Of course, the process you started will still keep writing to the underlying file which now you called /tmp/log.1. And you can't (easily at least, I guess anything is possible with enough bit twidlling) make it stop, without killing the process.
+
+So you want to write to a file which you can rotate.
+
+First, lets make sure 
+
+
+
 
 
 
