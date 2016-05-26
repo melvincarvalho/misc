@@ -1,3 +1,11 @@
+Guide to python logging using logging.
+
+You are writing some python, and you want to get beyond print to use some type of logging.
+
+The first section here deals with your first steps to using logging. Subsequent sections will deal with servers and libraries. Note that some of the suggestions in the first section are not be suitable for logging in servers and libraries.
+
+## First look at logging
+
 ```
 import os, sys
 import logging
