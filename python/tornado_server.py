@@ -5,6 +5,9 @@ import logging
 import logconf
 
 logger = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+logger.addHandler(_handler)
+logger.propagate = False
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
