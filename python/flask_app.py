@@ -17,9 +17,11 @@ app = Flask(__name__)
 app.logger.addHandler(logconf._handler)
 app.logger.setLevel(logging.DEBUG)
 
-@app.route("/")
+@app.route("/", methods=["GET","POST"])
 def base():
-    logger.info("(%s) logging for hellow world" % (os.getpid(),))
+    print "%s" % (request.__dict__,)
+    print "\n\nFORM: %s" % (request.form,)
+    logger.info("(%s) logging for hellow world!" % (os.getpid(),))
     time.sleep(int(request.args.get("ss",0)))
     logger.info("(%s) returning" % (os.getpid(),))
     return "(%s) hellow world!" % (os.getpid(),)
