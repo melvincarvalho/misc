@@ -1,0 +1,84 @@
+This documents how to use API Gateway to receive GET/POST requests and give them to a lambda function, and also how to get back responses from the Lambda function and translate that into http responses back.
+
+*** 1. GET requests. ****
+Get query parameters from: event.get("params") - it gives back a dict of the url params.
+
+*** 2. POST requests with form data ***
+API Gateway does not parse out non-json data. So the data is passed "as is" to the lambda fn which will have to parse it out.
+"""
+import urlparse
+
+body = event.get("body")
+o = urlparse.parse_qs(body)
+
+o = urlparse.parse_qs('param1=foo&param2=bar')
+{'param1': ['foo'], 'param2': ['bar']}
+"""
+
+
+*** 3. POST requests with json data ***
+body = event.get("body")
+body.get("param1")...
+
+*** 4. requests to gateway-url/<resource> i.e. gateway-url/test1
+resource_path = context.get("resource-path") # == "/test1"
+
+
+
+*** 2. POST requests expanded. ***
+"{\"status\": \"no command\", \"body\": \"<type 'unicode'> param1=foo&param2=bar\", \"params\": \"<type 'dict'> {u'path': {}, u'querystring': {}, u'header': {u'Content-Type': u'application/x-www-form-urlencoded', u'Via': u'1.1 f8375738cc4acf5f5ea814a0efd10a17.cloudfront.net (CloudFront)', u'CloudFront-Is-Desktop-Viewer': u'true', u'CloudFront-Is-SmartTV-Viewer': u'false', u'CloudFront-Forwarded-Proto': u'https', u'X-Forwarded-For': u'75.37.202.97, 205.251.214.42', u'CloudFront-Viewer-Country': u'US', u'Accept': u'*/*', u'User-Agent': u'curl/7.43.0', u'Host': u'c5e2xv1qqe.execute-api.us-west-2.amazonaws.com', u'X-Forwarded-Proto': u'https', u'X-Amz-Cf-Id': u'1pkkaRbPY7Db-IThgn4VyMzTvRkxAfEXZo5WZdxdGuELBDWL-rlfXg==', u'CloudFront-Is-Tablet-Viewer': u'false', u'X-Forwarded-Port': u'443', u'CloudFront-Is-Mobile-Viewer': u'false'}}\"}"
+
+*** 1. GET requests expanded. ***
+---
+"{\"status\": \"no command\", \"body\": \"<type 'NoneType'> None\", \"params\": \"<type 'dict'> {u'path': {}, u'querystring': {u'foo': u'bar', u'baz': u'boo'}, u'header': {u'Via': u'1.1 d03e57da6d2a774444e63ebbe2e7e9c0.cloudfront.net (CloudFront)', u'CloudFront-Is-Desktop-Viewer': u'true', u'CloudFront-Is-SmartTV-Viewer': u'false', u'CloudFront-Forwarded-Proto': u'https', u'X-Forwarded-For': u'75.37.202.97, 205.251.214.84', u'CloudFront-Viewer-Country': u'US', u'Accept': u'*/*', u'User-Agent': u'curl/7.43.0', u'Host': u'c5e2xv1qqe.execute-api.us-west-2.amazonaws.com', u'X-Forwarded-Proto': u'https', u'X-Amz-Cf-Id': u'nBu-50gi8vHJwvA-0juPEIt8tqlOC0gSAICY3cDXWVZ-QpHaWnJLbQ==', u'CloudFront-Is-Tablet-Viewer': u'false', u'X-Forwarded-Port': u'443', u'CloudFront-Is-Mobile-Viewer': u'false'}}\"}"
+---
+Integration request -> Body Mapping Templates
+Content-Type: application/json
+"""
+##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload
+#set($allParams = $input.params())
+{
+"request-type":"GET",
+"channel":"slack-msg",
+"body" : $input.json('$'),
+"params" : {
+#foreach($type in $allParams.keySet())
+    #set($params = $allParams.get($type))
+"$type" : {
+    #foreach($paramName in $params.keySet())
+    "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+        #if($foreach.hasNext),#end
+    #end
+}
+    #if($foreach.hasNext),#end
+#end
+},
+"stage-variables" : {
+#foreach($key in $stageVariables.keySet())
+"$key" : "$util.escapeJavaScript($stageVariables.get($key))"
+    #if($foreach.hasNext),#end
+#end
+},
+"context" : {
+    "account-id" : "$context.identity.accountId",
+    "api-id" : "$context.apiId",
+    "api-key" : "$context.identity.apiKey",
+    "authorizer-principal-id" : "$context.authorizer.principalId",
+    "caller" : "$context.identity.caller",
+    "cognito-authentication-provider" : "$context.identity.cognitoAuthenticationProvider",
+    "cognito-authentication-type" : "$context.identity.cognitoAuthenticationType",
+    "cognito-identity-id" : "$context.identity.cognitoIdentityId",
+    "cognito-identity-pool-id" : "$context.identity.cognitoIdentityPoolId",
+    "http-method" : "$context.httpMethod",
+    "stage" : "$context.stage",
+    "source-ip" : "$context.identity.sourceIp",
+    "user" : "$context.identity.user",
+    "user-agent" : "$context.identity.userAgent",
+    "user-arn" : "$context.identity.userArn",
+    "request-id" : "$context.requestId",
+    "resource-id" : "$context.resourceId",
+    "resource-path" : "$context.resourcePath"
+    }
+}
+"""
