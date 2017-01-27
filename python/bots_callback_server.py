@@ -12,13 +12,23 @@ logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(10)
 
+# MUST HAVE.
 SLACK_CLIENT_ID = os.getenv("SLACK_CLIENT_ID", "6915687573.133727880087")
 SLACK_CLIENT_SECRET = os.getenv("SLACK_CLIENT_SECRET", "86fbee294e8c48abd6d892eb5577375f")
 
-SLACK_BOT_ACCESS_TOKEN = os.getenv("SLACK_BOT_ACCESS_TOKEN", "")
+# Must have if going to respond to events. Otherwise /slack/oauth
+# can be used to get the access token and set this variable.
+SLACK_BOT_ACCESS_TOKEN = os.getenv("SLACK_BOT_ACCESS_TOKEN",
+                                   "xoxb-133750070710-BSsCrCYSWIjLqoQIcJB3kw8g")
+# Required if messages to the bot using "@botname" need to be recognized.
+# If not set, only direct messages to the bot will be recognized.
+BOT_USER_ID = os.getenv("BOT_USER_ID", "U3XN222LW")
+bot_user_id_token = "<@%s>" % (BOT_USER_ID,)
+
 SLACK_TEAM_ID = os.getenv("SLACK_TEAM_ID", "")
 
 app = Flask(__name__)
+slackClient = None
 
 # Make this call to do oauth for your bot.
 # https://slack.com/oauth/authorize?scope=bot&client_id=<your app client id>
@@ -71,6 +81,8 @@ def slack_callback():
         return make_response("no json payload found", 200)
     if "challenge" in r:
         return make_response(r["challenge"], 200)
+    if "event" in r:
+        slack_process_event(r)
     return make_response("ok", 200)
 
 @app.route("/ping", methods=["GET","POST"])
@@ -81,5 +93,40 @@ def base():
     print "\n\nrequest.url: %s" % (request.url,)
     return make_response("ok", 200)
 
+def slack_process_event(r):
+    # r: request.json
+    # Only respond to two types of messages:
+    # 1. Direct Messages
+    # 2. Messages in channels directly addressed to the bot.
+    e = r["event"]
+    if "subtype" in e:
+        log.debug("Not processing this event: %s", e)
+        return
+    channel = e.get("channel")
+    processMsg = channel.startswith("D")
+    msg = e.get("text", "")
+    hasBotId = msg.find(bot_user_id_token)
+    log.debug("hasBotId: %s", hasBotId)
+    processMsg |= (channel.startswith("C") and hasBotId > -1)
+    log.debug("processMsg: %s", processMsg)
+    if processMsg:
+        # Don't send back @BOT_USER_ID in the response!
+        #responseMsg = " ".join(msg.split(bot_user_id_token,1))
+        responseMsg = e.get("text")
+        apiResult = slackClient.api_call(
+            "chat.postMessage", channel=channel,
+            text="Got your message: %s" % (responseMsg,))
+        if not apiResult.get("ok"):
+            log.error("Could not send back message: %s", apiResult)
+        else:
+            log.debug("sent message ok")
+    else:
+        log.debug("Not processing this event: %s", e)
+        return
+        
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=8095)
+    global slackClient
+    slackClient = SlackClient(SLACK_BOT_ACCESS_TOKEN)
+    app.run(debug=False, port=8095)
