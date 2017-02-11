@@ -1,0 +1,2 @@
+curl -vv --request POST -H "Content-Type: application/json" http://localhost:5000/localapi -d '{"user_id":"nishant", "text":"how can i get a refund"}'
+
