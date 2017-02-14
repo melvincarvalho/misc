@@ -14,7 +14,7 @@ log.setLevel(10)
 
 # MUST HAVE.
 SLACK_CLIENT_ID = os.getenv("SLACK_CLIENT_ID", "6915687573.133727880087")
-SLACK_CLIENT_SECRET = os.getenv("SLACK_CLIENT_SECRET", "86fbee294e8c48abd6d892eb5577375f")
+SLACK_CLIENT_SECRET = os.getenv("SLACK_CLIENT_SECRET")  # Don't put secret in code.
 
 # Must have if going to respond to events. Otherwise /slack/oauth
 # can be used to get the access token and set this variable.
