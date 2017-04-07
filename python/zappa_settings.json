@@ -1,0 +1,9 @@
+{
+  "test": {
+    "s3_bucket": "ml-lamdba-test-1",
+    "app_function": "flask_simple.app"
+    "environment_variables": {
+      "REALM":"dev"
+    },
+  }
+}
