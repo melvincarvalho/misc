@@ -6,3 +6,7 @@
 
 ### Start a webserver in any directory
 `python -m SimpleHTTPServer 9001`
+
+### Bash
+
+`date +%s --date='Aug 15 2017'`
