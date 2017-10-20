@@ -16,6 +16,21 @@ app = Flask(__name__)
 def s1(path):
     return base(path=path)
 
+@app.route("/r", methods=["GET", "POST"])
+def http_response_code():
+    print_request_details()
+    code = int(request.args.get("code", 200))
+    response = Response("code=%s" % (code,))
+    response.status_code = code
+    return response
+
+@app.route("/json", methods=["GET", "POST"])
+def json_response():
+    print_request_details()
+    response = jsonify({"status":"OK"})
+    response.status_code = 200
+    return response
+
 @app.route("/api/v2/tickets.json", methods=["GET", "POST"])
 def lyft_zendesk_api():
     print_request_details()

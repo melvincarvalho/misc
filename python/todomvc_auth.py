@@ -1,14 +1,21 @@
 from functools import wraps
 from flask import Flask
+from flask import Response
 from flask import request
 from flask_restplus import Api, Resource, fields
+from flask_restplus import abort
 from werkzeug.contrib.fixers import ProxyFix
 
 authorizations = {
-    'apikey': {
+    'accountId': {
         'type': 'apiKey',
         'in': 'header',
-        'name': 'X-API-KEY'
+        'name': 'X-ACCOUNT-ID'
+    },
+    'accountSecret': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'X-ACCOUNT-SECRET'
     }
 }
 
@@ -16,7 +23,12 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app)
 api = Api(app, version='1.0', title='TodoMVC API',
           description='A simple TodoMVC API',
-          authorizations=authorizations, security='apikey')
+          authorizations=authorizations,
+          security=['accountId', 'accountSecret']  # apply to all methods on this api
+          # (http://flask-restplus.readthedocs.io/en/stable/swagger.html)
+          # This is purely swagger - i.e. only applies to the docs generated,
+          # does not appear to actually enforce it!
+)
 
 ns = api.namespace('todos', description='TODO operations')
 
@@ -25,6 +37,9 @@ todo = api.model('Todo', {
     'task': fields.String(required=True, description='The task details')
 })
 
+
+class InvalidKeyError(Exception):
+    pass
 
 class TodoDAO(object):
     def __init__(self):
@@ -67,12 +82,18 @@ def require_api_key(view_function):
     @wraps(view_function)
     # The new, post-decoration function. Note *args and **kwargs here.
     def decorated_function(*args, **kwargs):
+        print "require_api_key wrapper"
         #if request.args.get('key') and request.args.get('key') == APPKEY_HERE:
-        if isValidAPIKeyAgentRequest(api.request):
+        if isValidAPIKeyAgentRequest(request):
+            print "key is valid"
             return view_function(*args, **kwargs)
         else:
-            response = Response(response="Invalid API credentials", status=401)
-            return response
+            print "key is invalid - returning 401"
+            abort(401)
+            #raise InvalidKeyError()
+            #response = Response(response="Invalid API credentials", status=401)
+            #return response
+            #return 'Invalid API credentials', 401
     return decorated_function
 
 
@@ -81,9 +102,9 @@ class TodoList(Resource):
     '''Shows a list of all todos, and lets you POST to add new tasks'''
     @ns.doc('list_todos')
     @ns.marshal_list_with(todo)
+    @require_api_key
     def get(self):
         '''List all tasks'''
-        print request
         return DAO.todos
 
     @ns.doc('create_todo')

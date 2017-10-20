@@ -5,5 +5,19 @@
     "environment_variables": {
       "REALM":"dev"
     },
+  },
+  "test_lambda1": {
+    "s3_bucket": "ml-lamdba-test-1",
+    "app_function": "lambda_fn.app"
+    "environment_variables": {
+      "REALM":"dev"
+    },
+  },
+  "test_lambda2": {
+    "s3_bucket": "ml-lamdba-test-1",
+    "app_function": "todomvc_auth.app"
+    "environment_variables": {
+      "REALM":"dev"
+    },
   }
 }
