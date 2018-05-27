@@ -1,7 +1,12 @@
+Me and my 13 year old son were talking about probability etc... so we got 12 quarters and tossed them (all together using a bowl to shake them...) 6 different times, and I was amazed at the result.
+
+We got either 6/6 or 5/7 / 7/5 each time!!! So we were trying to work out how likely this was.
+
+----------
+
 Tossing 12 coins.
 
 num ways of getting of 6 heads / 6 tails: 12 choose 6 (order does not matter) => 12! / 6! 6! = 924
-probability = 924 / 2^12 = 231 / 1024
 
 num ways of 5 heads / 7 tails: 12 choose 5 => 12! / 5! 7! = 396
 => 7 heads / 5 tails = 396.
@@ -11,4 +16,6 @@ So, total ways = 924 + 396 + 396 = 1716.
 Probability = 1716 / 2^12 =~ 0.42
 
 So, getting it 6 time = 0.42^6 = 0.0055 !!!!
+
+Am I remembering my probabilities wrong?
 
