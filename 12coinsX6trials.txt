@@ -19,3 +19,12 @@ So, getting it 6 time = 0.42^6 = 0.0055 !!!!
 
 Am I remembering my probabilities wrong?
 
+
+______
+
+tossing 12 coins is 2^12 = 4096 outcomes with equal probability
+al heads = 1 in 4096
+one head = 12 in 4096
+2 heads = 12 * 11 / 2 = 66 in 4096
+12 choose 6 = 924 so it's 924 / 4097
+
